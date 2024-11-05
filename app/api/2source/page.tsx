@@ -4,58 +4,65 @@
 // import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
-type TitleType = {
-    id: number;
-    title: string;
-};
-
-type ContentType = {
-    id: number;
-    content: string;
+// Update MergedType to include author and date
+type MergedType = {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  date: string; // or Date, depending on the format of the date field in your data
 };
 
 export default function MyFetch() {
-    const [titles, setTitles] = useState<TitleType[]>([]);
-    const [contents, setContents] = useState<ContentType[]>([]);
+  const [titles, setTitles] = useState([]);
+  const [contents, setContents] = useState([]);
+  const [mergedData, setMergedData] = useState<MergedType[]>([]);
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                // Fetch titles from the first API
-                const titleResponse = await fetch('https://jsonplaceholder.typicode.com/photos'); // Adjust to actual API
-                const titleData = await titleResponse.json();
-                
-                // Fetch contents from the second API
-                const contentResponse = await fetch('https://api.vercel.app/blog'); // Adjust to actual API
-                const contentData = await contentResponse.json();
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Fetch titles
+        const titlesRes = await fetch('https://api.example.com/titles');
+        const titlesData = await titlesRes.json();
+        setTitles(titlesData);
 
-                setTitles(titleData);
-                setContents(contentData);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        }
+        // Fetch contents
+        const contentsRes = await fetch('https://api.example.com/contents');
+        const contentsData = await contentsRes.json();
+        setContents(contentsData);
 
-        fetchData();
-    }, []);
+        // Merge the data based on the `id`
+        const merged = titlesData.map((titleItem:any) => {
+          const contentItem = contentsData.find((item:any) => item.id === titleItem.id);
+          return {
+            id: titleItem.id,
+            title: titleItem.title,
+            content: contentItem ? contentItem.content : 'No content available',
+            author: contentItem ? contentItem.author : 'Unknown author', // add author from content source
+            date: contentItem ? contentItem.date : 'Unknown date',       // add date from content source
+          };
+        });
+        setMergedData(merged);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
 
-    if (!titles.length || !contents.length) return <>...loading!!</>;
-    
-    return (
-        <div className="min-h-screen bg-blue-50 p-10">
-            <h1 className="text-3xl font-bold text-center mb-8">Combined Data</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {titles.map((titleItem, index) => {
-                    // Get the corresponding content from the second API (assuming they align by index)
-                    const contentItem = contents[index];
-                    return (
-                        <div key={titleItem.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
-                            <h2 className="text-xl font-semibold text-blue-800 mb-2">{titleItem.title}</h2>
-                            <p className="text-gray-700">{contentItem?.content || "No content available"}</p>
-                        </div>
-                    );
-                })}
-            </div>
+    fetchData();
+  }, []);
+
+  if (!mergedData.length) return <>Loading...</>;
+
+  return (
+    <div className="grid grid-cols-3 gap-4 p-4 bg-light-blue">
+      {mergedData.map((item) => (
+        <div key={item.id} className="bg-white p-4 rounded shadow">
+          <h3 className="text-xl font-bold">{item.title}</h3>
+          <p>{item.content}</p>
+          <p><strong>Author:</strong> {item.author}</p>
+          <p><strong>Date:</strong> {item.date}</p>
         </div>
-    );
+      ))}
+    </div>
+  );
 }

@@ -38,7 +38,7 @@ export default function MyFetch() {
     if (!data) return <>...loading!!</>
 
     return (<>
-      <div className="min-h-screen bg-blue-50 p-10">
+    <div className="min-h-screen bg-blue-50 p-10">
       <h1 className="text-3xl font-bold text-center mb-8">Fetched Data</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {data.map((item) => (
